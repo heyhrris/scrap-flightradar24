@@ -20,11 +20,19 @@ on:
   # Sengaja dimajukan ke dini hari: makin awal di-scrape, makin sedikit jam
   # yang harus dimundurkan lewat 'Load earlier flights', jadi data lebih utuh.
   # Menit :15 dipakai untuk menghindari antrean runner di menit :00.
-  schedule:
-    - cron: '15 18 * * *'  # 01.15 WIB — utama (paling awal = paling lengkap)
-    - cron: '15 22 * * *'  # 05.15 WIB — cadangan 1
-    - cron: '15 2 * * *'   # 09.15 WIB — cadangan 2
-    - cron: '15 6 * * *'   # 13.15 WIB — cadangan 3 (terakhir; notifikasi dari sini)
+  # ── JADWAL DINONAKTIFKAN SEMENTARA (14 Sep 2026) ──────────────────────
+  # FR24 merombak halaman data & memperketat anti-bot: endpoint airport.json
+  # yang disadap scraper sudah tidak dipanggil lagi, dan permintaan "Earlier
+  # flights" membalas 403 dari runner. Akibatnya tiap run mengumpulkan 0 baris,
+  # gagal, lalu menerbitkan issue tiap hari. Jadwal dimatikan agar tidak
+  # menumpuk notifikasi sampah sampai jalan keluarnya diputuskan.
+  # Trigger manual (workflow_dispatch) sengaja tetap aktif untuk uji coba.
+  # Cara menghidupkan lagi: hapus tanda # pada empat baris cron di bawah.
+  # schedule:
+  #   - cron: '15 18 * * *'  # 01.15 WIB — utama
+  #   - cron: '15 22 * * *'  # 05.15 WIB — cadangan 1
+  #   - cron: '15 2 * * *'   # 09.15 WIB — cadangan 2
+  #   - cron: '15 6 * * *'   # 13.15 WIB — cadangan 3
 
 permissions:
   contents: write   # untuk commit & push hasil ke repo

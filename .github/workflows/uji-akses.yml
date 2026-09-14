@@ -1,0 +1,23 @@
+name: Uji Akses FR24
+
+# Diagnostik manual saja - tidak menyimpan data, tidak commit apa pun.
+# Dipakai untuk menguji dari IP GitHub apakah scraping anonim masih mungkin
+# setelah FR24 merombak halaman data (Sep 2026). Sengaja tidak dijadwalkan.
+on:
+  workflow_dispatch:
+
+jobs:
+  uji:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          pip install playwright
+          playwright install --with-deps chromium
+      - name: Jalankan uji akses
+        run: python uji_akses_fr24.py
