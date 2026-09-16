@@ -6,6 +6,9 @@ Repo ini berisi **2 dataset berbeda**. Jangan dicampur: skala dan cakupannya jau
 
 ## Dataset A — Papan Arrival/Departure per Bandara (utama, otomatis)
 
+> 🛑 **Scraper FR24 BERHENTI sejak 11 Sep 2026** — lihat bagian
+> *Status Sep 2026: FR24 menutup akses otomatis* di bawah. Data terakhir `260910`.
+
 Scraper: [`scrape_board.py`](scrape_board.py) · Otomatis via GitHub Actions ([`.github/workflows/scrape.yml`](.github/workflows/scrape.yml)), mengambil data **H-1**.
 
 Jadwal: **01.15 WIB** (utama), cadangan **05.15**, **09.15**, **13.15 WIB**.
@@ -128,6 +131,63 @@ Scraper: [`scrape_statistics.py`](scrape_statistics.py) · Sumber: <https://www.
 | `share_commercial_%` | Porsi komersial terhadap total |
 
 **Catatan teknis:** FR24 menumpuk semua tahun pada satu sumbu tanggal, jadi tanggal asli dipetakan ulang dari nama seri + urutan hari (bukan dari nilai sumbu — kalau dari sumbu, 29 Feb tahun kabisat hilang). Tombol `Download CSV` bawaan Highcharts **tidak memadai** karena hanya mengekspor seri yang terlihat, sedangkan seri harian tahun-tahun lama disembunyikan.
+
+---
+
+## Status Sep 2026: FR24 menutup akses otomatis
+
+**Mulai ~11 Sep 2026 scraper FR24 tidak bisa jalan lagi.** Jadwal di
+`scrape.yml` sudah dikomentari (manual tetap aktif). Data terakhir: `260910`.
+
+Apa yang berubah di FR24:
+- Halaman papan dirombak. Endpoint `api.flightradar24.com/common/v1/airport.json`
+  yang dulu disadap **tidak dipakai lagi**. Data kini dirender server
+  (div, tanpa `<tr>`), dipaginasi lewat
+  `/data/airports/<iata>/<arrivals|departures>?date=<unix>&page=0`
+  (`page=0` = mulai dari jangkar ke depan, ±100 baris per blok; `page=-1` mundur).
+- **Cloudflare** menyaring bot (`connect-src 'self' https://challenges.cloudflare.com`).
+  Dari Chromium headless — baik di GitHub Actions maupun laptop — papan kosong
+  dan permintaan data membalas **403**. Workflow **Uji Akses FR24**
+  (`uji_akses_fr24.py`) menguji ini dari IP GitHub; hasil 14 & 16 Sep: tetap diblokir.
+- Browser biasa yang login **Gold** masih bisa membaca papan, tapi kalender
+  hanya mundur **2 hari**. Otomatisasi lewat sesi Gold **tidak dipakai**:
+  melanggar ketentuan FR24, mempertaruhkan akun berbayar, dan diblokir oleh
+  pengaman Claude Code ("Third-Party Attack").
+- API resmi FR24 berbayar ($9 / $90 / $900 per bulan, tanpa paket gratis) —
+  tidak diambil karena tidak ada anggaran.
+
+Tanggal yang hilang karena ini: `260911` dst.
+
+### Rencana lanjutan: OpenSky Network (gratis, sesi terpisah)
+
+Sumber pengganti yang sah dan gratis untuk riset non-komersial.
+
+- Akun gratis → buat **API client** (OAuth2 *client credentials*; basic auth
+  sudah tidak diterima). Simpan sebagai secret repo:
+  `OPENSKY_CLIENT_ID`, `OPENSKY_CLIENT_SECRET` (diisi pemilik akun sendiri,
+  jangan ditempel di chat).
+- Endpoint: `GET /flights/arrival` dan `/flights/departure`
+  (`airport` = kode ICAO, `begin`/`end` unix, rentang maks. 2 hari,
+  data H-1 diproses tiap malam). Kuota akun terdaftar 4.000 kredit/hari.
+- Kode ICAO 13 bandara: CGK=WIII, DPS=WADD, BPN=WALL, KNO=WIMM, PKU=WIBB,
+  SUB=WARR, UPG=WAAA, YIA=WAHI, LOP=WADL, KOE=WATT, LBJ=WATO, SIN=WSSS, KUL=WMKK.
+- Simpan di folder terpisah (mis. `csv/opensky/`) — **jangan dicampur**
+  dengan file FR24.
+
+**Datanya TIDAK sama dengan FR24:**
+- Hanya penerbangan yang benar-benar terbang (dari sinyal ADS-B). Tidak ada
+  status Canceled/Scheduled/Delayed dan tidak ada jam jadwal → analisis
+  pembatalan & keterlambatan tidak bisa.
+- Ada `callsign` (GIA823), bukan nomor penerbangan (GA823); maskapai dari
+  awalan callsign; tipe/registrasi lewat `icao24` + basis data pesawat OpenSky.
+- Waktu = pertama/terakhir tertangkap sinyal, bukan jam mendarat persis;
+  bandara asal/tujuan berupa perkiraan.
+- Cakupan tergantung penerima sinyal di Indonesia → level angka bisa lebih
+  rendah dari FR24, terutama bandara kecil.
+
+**Cara menyambung deret waktu dengan jujur:** ambil OpenSky untuk tanggal
+yang juga ada di FR24 (5 Mei–10 Sep), hitung rasio per bandara, lalu
+tandai jelas bahwa sumber berganti mulai 11 Sep 2026.
 
 ---
 
