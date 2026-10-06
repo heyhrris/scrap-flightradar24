@@ -1,0 +1,38 @@
+name: FR24 Statistik Global
+
+# Dataset B: jumlah penerbangan global harian (total & commercial) dari
+# https://www.flightradar24.com/data/statistics -> csv/fr24-statistics-harian.csv
+# Manual saja. Setiap run menarik ulang seluruh deret (2022 -> kemarin),
+# jadi tidak perlu jalan tiap hari; cukup saat datanya mau dipakai.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  statistik:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          playwright install --with-deps chromium
+
+      - name: Ambil statistik
+        run: python scrape_statistics.py
+
+      - name: Commit & push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add csv/fr24-statistics-harian.csv
+          git diff --cached --quiet || git commit -m "data: fr24-statistics s/d $(tail -1 csv/fr24-statistics-harian.csv | cut -d, -f1)"
+          git push
