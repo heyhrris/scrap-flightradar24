@@ -11,7 +11,9 @@
 
 set -uo pipefail
 
-REPO="/Users/haris/Library/Mobile Documents/com~apple~CloudDocs/Haris Eko Faruddin/claude/flightradar24"
+# Folder repo = folder tempat skrip ini berada (tahan kalau folder dipindah/rename;
+# yang perlu disesuaikan hanya path di plist LaunchAgent).
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GIT=/usr/bin/git
 PY=/usr/bin/python3
 
